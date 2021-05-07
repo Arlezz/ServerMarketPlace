@@ -1,0 +1,36 @@
+{
+  "name": "flake-idgen",
+  "version": "1.4.0",
+  "description": "Flake ID generator yields k-ordered, conflict-free ids in a distributed environment",
+  "main": "flake-id-gen.js",
+  "scripts": {
+    "test": "istanbul cover _mocha --report lcovonly"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/T-PWK/flake-idgen.git"
+  },
+  "contributors": [],
+  "keywords": [
+    "id",
+    "unique",
+    "twitter",
+    "snowflake",
+    "flake",
+    "distributed"
+  ],
+  "author": {
+    "name": "Tom Pawlak",
+    "url": "https://blog.abelotech.com/"
+  },
+  "homepage": "https://github.com/T-PWK/flake-idgen",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://blog.abelotech.com/mit-license/"
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/T-PWK/flake-idgen/issues"
+  }
+}
