@@ -6,7 +6,7 @@ const intformat = require('biguint-format')
 
 var flakeIdGen = new FlakeId({ epoch: 1300000000000 });
  
-
+//Devuelve todos los productos
 router.get('/', (req, res) =>{
     mysqlConnection.query('SELECT * FROM products', (err, rows, fields) =>{
         if(!err){
@@ -17,6 +17,8 @@ router.get('/', (req, res) =>{
     });
 });
 
+
+//Devuelve producto por id
 router.get('/:id', (req, res) => {
     const { id } = req.params;
     mysqlConnection.query('SELECT * FROM products WHERE id = ?', [id], (err,rows,fields) =>{
@@ -29,6 +31,20 @@ router.get('/:id', (req, res) => {
     
 });
 
+//Devuelve todos los productos de un usuario por idPropietario
+router.get('/owner/:owner', (req, res) =>{
+    const { owner } = req.params;
+    mysqlConnection.query('SELECT * FROM products WHERE propietario = ?',[owner] ,(err, rows, fields) =>{
+        if(!err){
+            res.json(rows);
+        } else{
+            console.log(err);
+        }
+    });
+});
+
+
+//Crea un producto
 router.post('/',(req, res) => {
     const {propietario,titulo,categoria,subcategoria,descripcion,condicion,stock,precio,precioEnvio,region,comuna} = req.body;
     var idProduct = intformat(flakeIdGen.next(), 'hex', { prefix: '0x' }); 
@@ -38,8 +54,6 @@ router.post('/',(req, res) => {
         nro_publicacion = getRandomInt(10000000,90000000)
     }
 
-
-    
     const query = 'CALL productAdd(?,?,?,?,?,?,?,?,?,?,?,?,?)';
     mysqlConnection.query(query, [propietario,idProduct,nro_publicacion,titulo,categoria,subcategoria,descripcion,condicion,stock,precio,precioEnvio,region,comuna], (err, rows, fields) =>{
         if(!err){
@@ -63,17 +77,16 @@ router.post('/',(req, res) => {
 });
 
 
-
-router.put('/:propietario/:id', (req, res) => {
+//Actualiza un producto
+router.put('/:id', (req, res) => {
     const { titulo,descripcion, condicion,stock,precio,precioEnvio} = req.body;
-    const { propietario, id } = req.params;
-    console.log(propietario+" "+id);
-    const query = 'CALL productEdit(?,?,?,?,?,?,?,?)';
-    mysqlConnection.query(query, [id,propietario,titulo,descripcion, condicion,stock,precio,precioEnvio], (err, rows, fields) =>{
+    const { id } = req.params;
+    console.log(id);
+    const query = 'CALL productEdit(?,?,?,?,?,?,?)';
+    mysqlConnection.query(query, [id,titulo,descripcion, condicion,stock,precio,precioEnvio], (err, rows, fields) =>{
         if(!err){
             res.json({status: "Producto actualizado",
             id:id,
-            propietario:propietario,
             titulo:titulo,
             descripcion:descripcion,
             condicion:condicion,
@@ -88,11 +101,11 @@ router.put('/:propietario/:id', (req, res) => {
 
 
 //Elimina un producto
-router.delete('/:propietario/:id',(req, res) => {
-    const { propietario,id } = req.params;
-    mysqlConnection.query('DELETE FROM usuarios WHERE id= ? AND propietario = ?', [id, propietario], (err, rows, fields) =>{
+router.delete('/:id',(req, res) => {
+    const { id } = req.params;
+    mysqlConnection.query('DELETE FROM products WHERE id= ?', [id], (err, rows, fields) =>{
         if(!err){
-            res.json({status: "Propietario eliminado"});
+            res.json({status: "Producto eliminado"});
         }else{
             console.log(err);
         }
@@ -100,7 +113,7 @@ router.delete('/:propietario/:id',(req, res) => {
     });
 });
 
-
+//Crea el numero de publicacion
 function getRandomInt(min,max){
     return Math.floor(min + Math.random() * max);
 }

@@ -46,9 +46,8 @@ router.get('/email/:email', (req, res) => {
 });
 
 //Crea nuevos usuarios
-router.post('/:token',(req, res) => {
-    const { name, lastname, rut, email, password } = req.body;
-    const { token } = req.params;
+router.post('/',(req, res) => {
+    const { token, name, lastname, rut, email, password } = req.body;
     var uuid = uuidv4();
     var rol = "usuario";
     var username = UsernameGenerator.generateUsername();

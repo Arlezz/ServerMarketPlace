@@ -9,10 +9,10 @@ const emulador = "dscfsiIDTLel8snYrnkXiG:APA91bFdS05VzjPfqLJUSXWTfzbsMEO6GtIn6CN
 
 router.get("/one-user", function(req, res){
     
-    
+    const { userSell } = req.body; 
 
     const data = {
-        tokenId: emulador,
+        tokenId: userSell,
         title: "Supermercado Libre",
         body: "Tu producto fue comprado"
     }
