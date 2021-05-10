@@ -2,19 +2,14 @@ const { response } = require("express");
 const admin = require("firebase-admin");
 
 
-/*function initFirebase(){
-    const serviceAccount = require(__dirname+"/keys/marketplace-a179d-firebase-adminsdk-azdpk-3f9ba8d00d.json");
+function initFirebase(){
+    const serviceAccount = require(__dirname+"/keys/marketplaceproyect-bf427-firebase-adminsdk-rn5uo-d55f3d0348.json");
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
     });
 }
-initFirebase();*/
+initFirebase();
 
-
-const serviceAccount = require(__dirname+"/keys/marketplace-a179d-firebase-adminsdk-azdpk-3f9ba8d00d.json");
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-});
 
 function sentPushToOneUser(notificacion){
     const message = {

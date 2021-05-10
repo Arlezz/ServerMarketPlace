@@ -16,7 +16,9 @@ app.use(express.json());
 // routes
 app.use('/api/users', require('./routes/users'));
 app.use('/api/products', require('./routes/products'));
+app.use('/images',express.static('src/res/products'));
 app.use('/api/notify', require('./routes/notify'));
+app.use('/api/appservices', require('./routes/appservices'));
 
 
 // starting the server
