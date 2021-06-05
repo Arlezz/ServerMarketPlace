@@ -4,6 +4,35 @@ const { v4: uuidv4 } = require('uuid');
 const mysqlConnection = require('../database');
 const UsernameGenerator = require('username-generator');
 const bcrypt = require('bcryptjs');
+const path = require('path');
+const multer = require('multer');
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, path.join(__dirname, '../res/users/'));
+    },
+    filename: function (req, file, cb) {
+        cb(null, new Date().toISOString().replace(/:/g, '-') + file.originalname);
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    //rechaza un archivo
+    if (file.mimetype == 'image/jpeg' || file.mimetype == 'image/png') {
+        cb(null, true);
+    } else {
+        cb(null, false);
+    }
+};
+
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 1024 * 1024 * 5
+    },
+    fileFilter: fileFilter
+});
+
 
 
 router.get('/asd', async (req, res) =>{//para generar contraseñas 
@@ -35,13 +64,31 @@ router.get('/:id', (req, res) => {
     
 });
 
-//Devuelve el uuid por medio del email
+router.put('/image/:id',upload.single('userImage'), (req,res) =>{
+    console.log(req.file)
+    const { id } = req.params;
+    const userImage = req.file;
+    console.log("id: "+id);
+    const query = 'CALL usuarioEditImage(?,?)';
+    mysqlConnection.query(query, [id,userImage.filename], (err, rows, fields) =>{
+        if(!err){
+            res.json({status: "Imagen actualizada",
+            id:id,
+            userImage:userImage.filename});
+        }else{
+            console.log(err);
+        }
+    });
+
+});
+
+//Devuelve el usuario por medio del email *para el loogin*
 router.get('/email/:email', (req, res) => {
     const { email } = req.params;
     mysqlConnection.query('SELECT * FROM usuarios WHERE email = ?', [email], (err,rows,fields) =>{
         if(!err){
             try{
-                res.json(rows[0].id);
+                res.json(rows[0]);
             }catch(e){
                 res.json("Id Unknown");
             }
@@ -54,14 +101,13 @@ router.get('/email/:email', (req, res) => {
 
 //Crea nuevos usuarios 
 router.post('/', async (req, res) => {
-    const { token, name, lastname, rut, email, password } = req.body;
+    const { name, lastname, rut, email, password } = req.body;
     var uuid = uuidv4();
     var rol = "usuario";
-    if(!token || !name || !rut|| !email|| !password){
+    if(!name || !rut|| !email|| !password){
         res.json({
             message:"Sometsomething went wrong"
         });
-        console.log("Sometsomething went wrong")
         return;
     }
     var username = UsernameGenerator.generateUsername();
@@ -73,7 +119,6 @@ router.post('/', async (req, res) => {
         console.log(username);
         const query = `
             SET @id = ?;
-            SET @token = ?;
             SET @rol = ?;
             SET @username = ?;
             SET @name = ?;
@@ -81,20 +126,19 @@ router.post('/', async (req, res) => {
             SET @rut = ?;
             SET @email = ?;
             SET @password = ?;
-            CALL usuarioAdd(@id,@token,@rol, @username, @name, @lastname, @rut, @email, @password);
+            CALL usuarioAdd(@id,@rol, @username, @name, @lastname, @rut, @email, @password);
         `;
-        mysqlConnection.query(query, [uuid,token,rol,username, name, lastname, rut, email, passwordHashed], (err, rows, fields) =>{
+        mysqlConnection.query(query, [uuid,rol,username, name, lastname, rut, email, passwordHashed], (err, rows, fields) =>{
             if(!err){
                 res.json({status: "Usuario guardado",
                 id:uuid,
-                token:token,
                 rol:rol,
                 username:username,
                 name:name,
                 lastname:lastname,
                 rut:rut,
                 email:email,
-                password:password});
+                password:passwordHashed});
             }else{
                 console.log(err);
             }
@@ -107,29 +151,58 @@ router.post('/', async (req, res) => {
 router.post("/login",  (req,res) =>{
     const email = req.body.email;
     const password = req.body.password;
+    const token = req.body.token;
     if(!email || !password){
         res.json({
             message:"Sometsomething went wrong"
         });
         return;
     }
-    //var passwordHashed =  await bcrypt.hash(password,15);
-    //console.log(passwordHashed); 
     verificaCredenciales(email,password, function(err,data){
         if(!err){
             if(data){
-                console.log("ENTREER")
+                insertaTokenUser(token,email);
                 res.json({
-                    message:"AUTENTICACION EXITOSA",
+                    message:"Logueado correctamente",
+                    email:email
                 });
             }else{
-                res.json({
-                    message:"INGRESE CORRECTAMENTE LAS CREDENCIALES"
-                })
+                res.status(500).send('Ingrese correctamente las credenciales');
             }
         }
     });
 });
+
+router.put("/logout",(req,res)=>{
+    const id = req.body.id;
+    if(!id){
+        res.json({
+            message:"Sometsomething went wrong"
+        });
+        return;
+    }
+    const query = "UPDATE usuarios SET token = NULL WHERE id = ?";
+    mysqlConnection.query(query,[id],(err,rows,fields)=>{
+        if(!err){
+            res.json({
+                message: "Successful exit"
+            });
+         } else{
+            res.status(500).send("Wrong exit");
+         }
+    });
+
+});
+
+function insertaTokenUser(token,email){
+    mysqlConnection.query('UPDATE usuarios SET token=? WHERE email=?', [token,email],(err,rows,fields)=>{
+        if(!err){
+           console.log("token insertado correctamente");
+        } else{
+           console.log("el token no se inserto correctamente");
+        }
+    });
+}
 
 function verificaCredenciales(email, password,callback){
     mysqlConnection.query('SELECT * FROM usuarios WHERE email = ?', [email], function (err,rows,fields){
@@ -164,7 +237,7 @@ router.put('/username/:id', (req, res) => {
             id:id,
             username:username});
         }else{
-            console.log(err);
+            res.status(500).send("Error al actualizar");
         }
     });
 });
@@ -194,7 +267,7 @@ router.put('/adress/:id',(req,res) => {
     });
 });
 
-//Actualiza solo el email
+//Actualiza el email
 router.put('/email/:id', (req, res) => {
     const { email } = req.body;
     const { id } = req.params;
@@ -216,7 +289,7 @@ router.put('/email/:id', (req, res) => {
     });
 });
 
-//Actualiza solo la contraseña
+//Actualiza la contraseña
 router.put('/password/:id', (req, res) => {
     const { password } = req.body;
     const { id } = req.params;
