@@ -75,6 +75,7 @@ router.get('/:id', (req, res) => {
 });
 
 function llenaImagenProducto(objeto) {
+    
     return new Promise((resolve, reject) => {
         (async () => {
             const images = await getImagesProduct(objeto.id);
@@ -88,25 +89,6 @@ function llenaImagenProducto(objeto) {
         })();
     });
 }
-
-
-/*function llenaImagenProducto(lista){
-    return new Promise((resolve, reject) => {
-        (async () => {
-            for (let i = 0; i <= lista.length - 1; i++) {
-
-                const images = await getImagesProduct(lista[i].id);
-                const arrImages = new Array(images.length);
-
-                for(let i = 0; i <= images.length-1; i++){
-                    arrImages[i] = images[i].imageProduct;
-                }
-                lista[i].productImage = arrImages;
-            }
-            return resolve(lista);
-        })();
-    });
-}*/
 
 
 //Devuelve todos los productos de un usuario por idPropietario
