@@ -3,21 +3,24 @@ const router = Router();
 const Notificacion = require('../notification');
 
 
-const cellFisico = "fsDjhzwIRdaKsfN_eyDd8i:APA91bHprnqfpYoFB6Ib9VbD1ehp7ScRG4xwgoecpBAipBnRMYP52Tich8vbqkbQKv2ac2p1o41d9cHkwV7ZM2c0QNxYaj1eTt6PWaZ7iQ8fyDRXzdoXmNNCVPVicF-LT7JPEv0hA7Ed";
-const emulador = "cy7fSV4WTI2Robw3OQLY-6:APA91bGibel1slttRPzIZx6IxA0mam-CPSYULdBPHHGLizmgQymO_jsN39zvsbxT4SwiD7Y-TBVrL7UeefSsSr5btKWZJhmkT5ttQ8-dgse3TyuxFUteSAG719U7znzeA8jy4G9J2-9E";
-
-
-router.get("/one-user", function(req, res){
+router.post("/buy-product", function(req, res){
     
-    const { userSell } = req.body; 
+    try {
+        const { token, tituloProducto} = req.body; 
 
-    const data = {
-        tokenId: emulador,
-        title: "Supermercado Libre",
-        body: "Tu producto fue comprado"
+        const data = {
+            tokenId: token,
+            title: "¡Realizaste una venta!",
+            body: "Tu producto "+tituloProducto+" acaba de ser comprado"
+        }
+        Notificacion.sentPushToOneUser(data);
+        res.status(200).send("Enviando notificación.");
+    } catch (error) {
+        console.log("usuario desconectado")
+        res.status(200).send("Enviando notificación");
     }
-    Notificacion.sentPushToOneUser(data);
-    res.send("Sending Notification to One user....");
+
+    
 });
 
 

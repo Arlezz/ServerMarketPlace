@@ -1,25 +1,28 @@
--crear una base de datos con productos
--crear base de dato para los usuarios
--base de datos para los productos de los usuarios
--buscar producto
--agregar productos
--ordenar productos
--eliminar productos
--categoria de productos
--filtrar productos
--agregar imagen del producto - 10 max
--estado del producto
--interfaz de usuario
--categorizacion del usuario
--comentarios de compradores
--registro de cuenta
--logueo de cuenta
+-crear una base de datos con productos***************
+-crear base de dato para los usuarios***************
+-base de datos para los productos de los usuarios***************
+-buscar producto***************
+-agregar productos***************
+-ordenar productos***************
+-eliminar productos***************
+-categoria de productos***************
+-filtrar productos***************
+-agregar imagen del producto - 10 max***************
+-estado del producto***************
+-interfaz de usuario***************
+-categorizacion del usuario***************
+-registro de cuenta***************
+-logueo de cuenta***************
+-sistema de notificaciones***************
+
+
 -recuperar cuenta - via SMS o EMAIL
 -agregar productos a favoritos
 -crear ofertas para productos
 -agregar direccion de compra - escrito o por google maps
--sistema de notificaciones
+
 -agregar sitema de cupones
+-comentarios de compradores
 
 -si es posible crear una pagina en html para la aplicacion
 conectada al mismo servidor que la app.

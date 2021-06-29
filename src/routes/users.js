@@ -5,6 +5,7 @@ const mysqlConnection = require('../database');
 const UsernameGenerator = require('username-generator');
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const fs = require('fs');
 const multer = require('multer');
 
 const storage = multer.diskStorage({
@@ -51,12 +52,15 @@ router.get('/', (req, res) =>{
     });
 });
 
-//Devuelve usuario buscado por id
+//Devuelve usuario basico para el producto, buscado por id
 router.get('/:id', (req, res) => {
     const { id } = req.params;
-    mysqlConnection.query('SELECT * FROM usuarios WHERE id = ?', [id], (err,rows,fields) =>{
+    mysqlConnection.query('SELECT id,token,username,articulos_vendidos FROM usuarios WHERE id = ?', [id], (err,rows,fields) =>{
         if(!err){
-            res.json(rows[0]);
+            res.json({id:rows[0].id,
+                    token:rows[0].token,
+                    username:rows[0].username,
+                    articulos_vendidos:rows[0].articulos_vendidos});
         } else{
             console.log(err);
         }
@@ -64,23 +68,56 @@ router.get('/:id', (req, res) => {
     
 });
 
-router.put('/image/:id',upload.single('userImage'), (req,res) =>{
-    console.log(req.file)
-    const { id } = req.params;
+//Actualiza imagen del usuario
+router.put('/upload/image',upload.single('userImage'), (req,res) =>{
+    const obj = JSON.parse(JSON.stringify(req.body.userImage));
+    const id = obj;
     const userImage = req.file;
     console.log("id: "+id);
+    console.log("image: "+userImage.filename);
     const query = 'CALL usuarioEditImage(?,?)';
     mysqlConnection.query(query, [id,userImage.filename], (err, rows, fields) =>{
         if(!err){
-            res.json({status: "Imagen actualizada",
-            id:id,
-            userImage:userImage.filename});
+            res.json(userImage.filename);
         }else{
             console.log(err);
         }
     });
 
 });
+
+router.delete('/delete/image/:id',(req, res) =>{
+    const { id } = req.params;
+    const query = "UPDATE usuarios SET imagen = null WHERE id = ?";
+    removeFromSV(id);
+    mysqlConnection.query(query,[id],(err, rows, fields) => {
+        if(!err){
+            res.status(200).send('Imagen eliminada');
+        }else{
+            res.status(500).send('No se pudo eliminar');
+        }
+    });
+});
+
+function removeFromSV(id){
+    mysqlConnection.query("SELECT imagen FROM usuarios WHERE id = ?",[id], (err, rows, field) =>{
+        if(!err){
+            try {
+                if(fs.accessSync(path.join(__dirname, '../res/users/') + rows[0].imagen)){
+                    fs.unlink(path.join(__dirname, '../res/users/') + rows[0].imagen, (err) => {
+                        if (err) {
+                            console.error(err)
+                            return
+                        }
+                        console.log("Imagen Removida");
+                    });
+                }
+            } catch (error) {
+                console.log("Imagen no existe"); 
+            }
+        }
+    });
+}
 
 //Devuelve el usuario por medio del email *para el loogin*
 router.get('/email/:email', (req, res) => {
@@ -187,9 +224,9 @@ router.put("/logout",(req,res)=>{
             res.json({
                 message: "Successful exit"
             });
-         } else{
+        } else{
             res.status(500).send("Wrong exit");
-         }
+        }
     });
 
 });
@@ -222,7 +259,7 @@ function verificaCredenciales(email, password,callback){
 
 //Actualiza solo el username
 router.put('/username/:id', (req, res) => {
-    const { username } = req.body;
+    const { username } = req.body.nameValuePairs;
     const { id } = req.params;
     if(!username){
         res.json({
@@ -269,7 +306,7 @@ router.put('/adress/:id',(req,res) => {
 
 //Actualiza el email
 router.put('/email/:id', (req, res) => {
-    const { email } = req.body;
+    const { email } = req.body.nameValuePairs;
     const { id } = req.params;
     if(!email){
         res.json({
@@ -277,7 +314,7 @@ router.put('/email/:id', (req, res) => {
         });
         return;
     } 
-    const query = 'CALL usuaruiEditEmail(?,?)';
+    const query = 'CALL usuarioEditEmail(?,?)';
     mysqlConnection.query(query, [id,email], (err, rows, fields) =>{
         if(!err){
             res.json({status: "Email actualizado",
@@ -290,8 +327,9 @@ router.put('/email/:id', (req, res) => {
 });
 
 //Actualiza la contraseña
-router.put('/password/:id', (req, res) => {
-    const { password } = req.body;
+router.put('/password/:id',async (req, res) => {
+    console.log(req.body.nameValuePairs)
+    const { password } = req.body.nameValuePairs;
     const { id } = req.params;
     if(!password){
         res.json({
@@ -299,14 +337,35 @@ router.put('/password/:id', (req, res) => {
         });
         return;
     } 
+    var passwordHashed =  await bcrypt.hash(password,15);
     const query = 'CALL usuarioEditPassword(?,?)';
-    mysqlConnection.query(query, [id,password], (err, rows, fields) =>{
+    mysqlConnection.query(query, [id,passwordHashed], (err, rows, fields) =>{
         if(!err){
             res.json({status: "Password actualizado",
             id:id,
-            password:password});
+            password:passwordHashed});
         }else{
             console.log(err);
+        }
+    });
+});
+
+//Actualiza la direccion del usuario
+router.put('/address/:id', (req, res) => {
+    const { region, comuna, calle, numero, telefono } = req.body;
+    const { id } = req.params;
+    if(!region && !comuna && !calle && !numero && !telefono){
+        res.json({
+            message:"Sometsomething went wrong"
+        });
+        return;
+    } 
+    const query = 'CALL usuarioEditDireccion(?,?,?,?,?,?)';
+    mysqlConnection.query(query, [id,region,comuna,calle,numero,telefono], (err, rows, fields) =>{
+        if(!err){
+            res.status(200).send("Direccion actualizada");
+        }else{
+            res.status(404).send("Sometsomething went wrong");
         }
     });
 });

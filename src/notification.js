@@ -19,7 +19,6 @@ function sentPushToOneUser(notificacion){
             body: notificacion.body
         }
     }
-    console.log(notificacion.tokenId+"\n"+notificacion.title+"\n"+notificacion.body+"\n")
     sendMessage(message);
 }
 
@@ -31,7 +30,6 @@ function sendPushToTopic(notificacion){
             body: notificacion.body
         }
     }
-    //console.log(notificacion.topic+"\n"+notificacion.title+"\n"+notificacion.body+"\n")
     sendMessage(message);
 }
 
